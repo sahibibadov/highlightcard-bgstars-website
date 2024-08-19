@@ -19,7 +19,7 @@ const LenisCursor = () => {
       });
       setHasMoved(true);
     },
-    [hasMoved]
+    [hasMoved],
   );
 
   useEffect(() => {
@@ -49,9 +49,7 @@ const LenisCursor = () => {
       setIsPointer(false);
     };
 
-    elements = Array.from(
-      document.querySelectorAll("button,a,input,label,[data-cursor='pointer']")
-    );
+    elements = Array.from(document.querySelectorAll("h1,h2,h3,button,a,input,label,[data-cursor='pointer']"));
 
     elements.forEach((element) => {
       element.addEventListener("mouseenter", onMouseEnter, false);
@@ -101,7 +99,7 @@ const LenisCursor = () => {
         <div
           className={cn(
             "hidden md:block absolute size-10 border border-black/10 dark:border-white/30 bg-transparent rounded-full backdrop-blur-[3px]   transition-transform ease-[cubic-bezier(0.19,1,0.22,1)] duration-500 -translate-x-2/4 -translate-y-2/4",
-            { "scale-50 -translate-x-2/4 -translate-y-2/4": isPointer }
+            { "scale-50 -translate-x-2/4 -translate-y-2/4": isPointer },
           )}
         />
       </div>

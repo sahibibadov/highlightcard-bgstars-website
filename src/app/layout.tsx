@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import MixNav from "@/components/navbar/mixNav";
 import LenisCursor from "@/components/cursor/lenis-cursor";
+import FramerCursor from "@/components/cursor/cursor-framer-motion";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
         <LenisCursor />
+        {/* <FramerCursor /> */}
         <MixNav />
 
         <main className="max-w-[1200px] mx-auto px-4  flex-1 w-full flex flex-col">{children}</main>

@@ -89,17 +89,12 @@ const ParticlesContainer = () => {
       },
       detectRetina: true,
     }),
-    []
+    [],
   );
 
   if (init) {
     return (
-      <Particles
-        className="absolute inset-0"
-        id="tsparticles"
-        particlesLoaded={particlesLoaded}
-        options={options}
-      />
+      <Particles className="absolute inset-0" id="tsparticles" particlesLoaded={particlesLoaded} options={options} />
     );
   }
 };
