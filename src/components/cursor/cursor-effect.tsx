@@ -31,8 +31,7 @@ const FlareCursor = () => {
   }), [position.x, position.y, flareSize, isPointer]);
 
   const cursorClassName = cn(
-    "fixed border-2 z-[100] border-black/10 dark:border-white/10 bg-transparent rounded-full mix-blend-normal pointer-events-none -translate-x-1/2 -translate-y-1/2 backdrop-filter backdrop-blur-[2px] transition-all duration-200 ease-in-out",
-    "hidden md:block"
+    "fixed border-2 z-[100] border-black/10 dark:border-white/10 bg-transparent rounded-full mix-blend-normal pointer-events-none -translate-x-1/2 -translate-y-1/2 backdrop-filter backdrop-blur-[2px]  hidden md:block"
   );
 
   return (
