@@ -1,81 +1,89 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+
+import React, { useCallback, useState, memo } from "react";
+import { AnimatePresence, motion, useMotionValue, useSpring, Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-const FramerCursor: React.FC = () => {
-  const [isPointer, setIsPointer] = useState<boolean>(false);
-  const cursorX = useMotionValue<number>(-100);
-  const cursorY = useMotionValue<number>(-100);
+interface CursorProps {}
 
-  const springConfig = { damping: 100, stiffness: 1000 };
-  const cursorXSpring = useSpring(cursorX, springConfig);
-  const cursorYSpring = useSpring(cursorY, springConfig);
+const FramerCursor: React.FC<CursorProps> = memo(() => {
+   const [isPointer, setIsPointer] = useState<boolean>(false);
+   const cursorX = useMotionValue<number>(-100);
+   const cursorY = useMotionValue<number>(-100);
 
-  const moveCursor = useCallback(
-    (e: MouseEvent) => {
-      cursorX.set(e.clientX - 16);
-      cursorY.set(e.clientY - 16);
-    },
-    [cursorX, cursorY],
-  );
+   const springConfig = { damping: 100, stiffness: 1000 };
+   const cursorXSpring = useSpring(cursorX, springConfig);
+   const cursorYSpring = useSpring(cursorY, springConfig);
 
-  useEffect(() => {
-    window.addEventListener("mousemove", moveCursor);
+   const moveCursor = useCallback(
+      (e: MouseEvent) => {
+         cursorX.set(e.clientX - 16);
+         cursorY.set(e.clientY - 16);
 
-    return () => {
-      window.removeEventListener("mousemove", moveCursor);
-    };
-  }, [moveCursor]);
+         // Check if the cursor is over specific elements
+         const elements = document.elementsFromPoint(e.clientX, e.clientY);
+         const isOverTargetElement = elements.some(
+            (element) =>
+               ["h1", "button", "a", "input", "label"].includes(element.tagName.toLowerCase()) ||
+               element.hasAttribute("data-cursor"),
+         );
 
-  useEffect(() => {
-    let elements: HTMLElement[] = [];
+         setIsPointer(isOverTargetElement);
+      },
+      [cursorX, cursorY],
+   );
 
-    const onMouseEnter = () => {
-      setIsPointer(true);
-    };
-    const onMouseLeave = () => {
-      setIsPointer(false);
-    };
+   React.useEffect(() => {
+      window.addEventListener("mousemove", moveCursor);
 
-    elements = Array.from(
-      document.querySelectorAll<HTMLElement>("h1,h2,h3,button,a,input,label,[data-cursor='pointer']"),
-    );
+      return () => {
+         window.removeEventListener("mousemove", moveCursor);
+      };
+   }, [moveCursor]);
 
-    elements.forEach((element) => {
-      element.addEventListener("mouseenter", onMouseEnter, false);
-      element.addEventListener("mouseleave", onMouseLeave, false);
-    });
+   const variants: Variants = {
+      normal: {
+         scale: 1,
+         transition: {
+            duration: 0.2,
+            ease: "easeOut",
+         },
+      },
+      pointer: {
+         scale: 0.5,
+         transition: {
+            duration: 0.2,
+            ease: "easeOut",
+         },
+      },
+   };
 
-    return () => {
-      elements.forEach((element) => {
-        element.removeEventListener("mouseenter", onMouseEnter, false);
-        element.removeEventListener("mouseleave", onMouseLeave, false);
-      });
-    };
-  }, []);
-
-  return (
-    <motion.div
-      className="hidden md:block pointer-events-none fixed z-50"
-      style={{
-        translateX: cursorXSpring,
-        translateY: cursorYSpring,
-      }}
-    >
-      <div
-        className={cn(
-          "mix-blend-mode-difference bg-blend-mode-difference backdrop-blur-sm size-10 border border-black/10 dark:border-white/30  transition-all duration-200 rounded-full",
-          {
-            "scale-50": isPointer,
-          },
-        )}
-      />
-    </motion.div>
-  );
-};
+   return (
+      <AnimatePresence>
+         <motion.div
+            className="pointer-events-none fixed z-[10001] hidden md:block"
+            initial="normal"
+            animate={isPointer ? "pointer" : "normal"}
+            exit="normal"
+            transition={{ duration: 0.2 }}
+            variants={variants}
+            style={{
+               translateX: cursorXSpring,
+               translateY: cursorYSpring,
+            }}
+         >
+            <div
+               className={cn(
+                  "mix-blend-mode-difference bg-blend-mode-difference size-9 rounded-full border bg-foreground/5 backdrop-blur-sm transition-all duration-200",
+               )}
+            />
+         </motion.div>
+      </AnimatePresence>
+   );
+});
 
 export default FramerCursor;
+
 
 // "use client";
 
