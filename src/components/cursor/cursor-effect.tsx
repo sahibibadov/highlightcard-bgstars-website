@@ -1,51 +1,96 @@
 "use client";
+
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
 const FlareCursor = () => {
   const [position, setPosition] = useState({ x: -100, y: -100 });
-
   const [isPointer, setIsPointer] = useState(false);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
+    const target = e.target as Element;
+    const isTargetPointer = window.getComputedStyle(target).cursor === "pointer";
+    
     setPosition({ x: e.clientX, y: e.clientY });
-
-    const target = e?.target as Element;
-
-    setIsPointer(window.getComputedStyle(target).getPropertyValue("cursor") === "pointer");
+    setIsPointer(isTargetPointer);
   }, []);
 
   useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, [handleMouseMove]);
 
   const flareSize = isPointer ? 0 : 40;
 
-  const cursorStyle = isPointer ? { left: "-100px", top: "-100px" } : {};
+  const cursorStyle = useMemo(() => ({
+    left: `${position.x}px`,
+    top: `${position.y}px`,
+    width: `${flareSize}px`,
+    height: `${flareSize}px`,
+    ...(isPointer ? { opacity: 0, pointerEvents: 'none' as const } : {}),
+  }), [position.x, position.y, flareSize, isPointer]);
+
+  const cursorClassName = cn(
+    "fixed border-2 z-[100] border-black/10 dark:border-white/10 bg-transparent rounded-full mix-blend-normal pointer-events-none -translate-x-1/2 -translate-y-1/2 backdrop-filter backdrop-blur-[2px] transition-all duration-200 ease-in-out",
+    "hidden md:block"
+  );
 
   return (
     <div
-      className={cn(
-        "hidden md:block fixed border-2 z-[100] border-black/10 dark:border-white/10 bg-transparent  rounded-full mix-blend-normal pointer-events-none -translate-x-1/2 -translate-y-1/2 backdrop-filter backdrop-blur-[2px] [transition:width_0.2s_ease-in-out,_height_0.2s_ease-in-out]",
-        {
-          "hidden !opacity-0 [transition:width_0.2s_ease-in-out,_height_0.2s_ease-in-out,_opacity_0.2s_ease-in-out]":
-            isPointer,
-        }
-      )}
-      style={{
-        ...cursorStyle,
-        left: `${position.x}px`,
-        top: `${position.y}px`,
-        width: `${flareSize}px`,
-        height: `${flareSize}px`,
-      }}
+      className={cursorClassName}
+      style={cursorStyle}
     />
   );
 };
 
 export default FlareCursor;
+
+//"use client";
+//import { cn } from "@/lib/utils";
+//import { useState, useEffect, useCallback } from "react";
+//const FlareCursor = () => {
+//  const [position, setPosition] = useState({ x: -100, y: -100 });
+
+//  const [isPointer, setIsPointer] = useState(false);
+//    const handleMouseMove = useCallback((e: MouseEvent) => {
+ //   setPosition({ x: e.clientX, y: e.clientY });
+
+//    const target = e?.target as Element;
+
+//    setIsPointer(window.getComputedStyle(target).getPropertyValue("cursor") === "pointer");
+ // }, []);
+
+ // useEffect(() => {
+//   window.addEventListener("mousemove", handleMouseMove);
+//
+//    return () => window.removeEventListener("mousemove", handleMouseMove);
+//  }, [handleMouseMove]);
+
+//  const flareSize = isPointer ? 0 : 40;
+
+//  const cursorStyle = isPointer ? { left: "-100px", top: "-100px" } : {};
+
+//  return (
+//    <div
+//      className={cn(
+//        "hidden md:block fixed border-2 z-[100] border-black/10 dark:border-white/10 bg-transparent  rounded-full mix-blend-normal pointer-events-none -translate-x-1/2 -translate-y-1/2 backdrop-filter backdrop-blur-[2px] [transition:width_0.2s_ease-in-out,_height_0.2s_ease-in-out]",
+//        {
+//          "hidden !opacity-0 [transition:width_0.2s_ease-in-out,_height_0.2s_ease-in-out,_opacity_0.2s_ease-in-out]":
+//            isPointer,
+//        }
+//      )}
+//      style={{
+//        ...cursorStyle,
+//        left: `${position.x}px`,
+//        top: `${position.y}px`,
+//        width: `${flareSize}px`,
+//        height: `${flareSize}px`,
+//      }}
+//    />
+//  );
+//};
+
+//export default FlareCursor;
 
 /* .flare {
   position: fixed;
