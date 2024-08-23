@@ -1,36 +1,19 @@
 "use client";
 
-import React, { useCallback, useEffect, useState,memo } from "react";
+import { useEffect, useState, FC } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring, Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
-//import { useMousePosition } from "@/hook/useMousePosition"; // Hook'u içe aktar
-
-export const useMousePosition = () => {
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
-  useEffect(() => {
-    const updateMousePosition = (ev: MouseEvent) => {
-      setMousePosition({ x: ev.clientX, y: ev.clientY });
-    };
-    window.addEventListener("mousemove", updateMousePosition);
-    return () => {
-      window.removeEventListener("mousemove", updateMousePosition);
-    };
-  }, []);
-  return mousePosition;
-};
+import { useMousePosition } from "@/hook/useMousePosition"; // Hook'u içe aktar
 
 interface CursorProps {}
 
-const FramerCursor: React.FC<CursorProps> = () => {
+const FramerCursor: FC<CursorProps> = () => {
   const [isPointer, setIsPointer] = useState<boolean>(false);
   const { x: mouseX, y: mouseY } = useMousePosition(); // Hook'u kullan
-  const cursorX = useMotionValue<number>(-100);
-  const cursorY = useMotionValue<number>(-100);
+  const cursorX = useMotionValue<number>(typeof window !== "undefined" ? window.innerWidth / 2 : 0);
+  const cursorY = useMotionValue<number>(typeof window !== "undefined" ? window.innerWidth / 2 : 0);
 
-  const springConfig = { damping: 100, stiffness: 1000 };
+  const springConfig = { damping: 200, stiffness: 3000 };
   const cursorXSpring = useSpring(cursorX, springConfig);
   const cursorYSpring = useSpring(cursorY, springConfig);
 
@@ -55,229 +38,84 @@ const FramerCursor: React.FC<CursorProps> = () => {
       scale: 1,
       transition: {
         duration: 0.2,
-        ease: "easeOut",
       },
     },
     pointer: {
       scale: 0.5,
       transition: {
         duration: 0.2,
-        ease: "easeOut",
       },
     },
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        className="pointer-events-none fixed z-[10001] hidden md:block"
-        initial="normal"
-        animate={isPointer ? "pointer" : "normal"}
-        exit="normal"
-        transition={{ duration: 0.2 }}
-        variants={variants}
-        style={{
-          translateX: cursorXSpring,
-          translateY: cursorYSpring,
-        }}
-      >
-        <div
+    <motion.div
+      className="pointer-events-none top-0 left-0 fixed z-[10001] hidden md:block"
+      style={{
+        translateX: cursorXSpring,
+        translateY: cursorYSpring,
+      }}
+    >
+      <AnimatePresence>
+        <motion.div
           className={cn(
-            "mix-blend-mode-difference bg-blend-mode-difference size-9 rounded-full border border-white/30 backdrop-blur-sm",
+            "mix-blend-mode-difference bg-blend-mode-difference size-9 rounded-full border border-foreground/30 backdrop-blur-sm",
           )}
+          initial="normal"
+          animate={isPointer ? "pointer" : "normal"}
+          exit="normal"
+          transition={{ duration: 0.2 }}
+          variants={variants}
         />
-      </motion.div>
-    </AnimatePresence>
+      </AnimatePresence>
+    </motion.div>
   );
 };
 
-export default memo(FramerCursor);
+export default FramerCursor;
 
-// "use client";
+/*"use client";
 
-// import React, { useCallback, useState, memo } from "react";
-// import { AnimatePresence, motion, useMotionValue, useSpring, Variants } from "framer-motion";
-// import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { useState, useEffect, useCallback, useMemo } from "react";
 
-// interface CursorProps {}
+const FramerCursor = () => {
+  const [position, setPosition] = useState({ x: -100, y: -100 });
+  const [isPointer, setIsPointer] = useState(false);
 
-// const Cursor: React.FC<CursorProps> = memo(() => {
-//   const [isPointer, setIsPointer] = useState<boolean>(false);
-//   const cursorX = useMotionValue<number>(-100);
-//   const cursorY = useMotionValue<number>(-100);
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const target = e.target as Element;
+    const isTargetPointer = window.getComputedStyle(target).cursor === "pointer";
+    
+    setPosition({ x: e.clientX, y: e.clientY });
+    setIsPointer(isTargetPointer);
+  }, []);
 
-//   const springConfig = { damping: 100, stiffness: 1000 };
-//   const cursorXSpring = useSpring(cursorX, springConfig);
-//   const cursorYSpring = useSpring(cursorY, springConfig);
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [handleMouseMove]);
 
-//   const moveCursor = useCallback(
-//     (e: MouseEvent) => {
-//       cursorX.set(e.clientX - 16);
-//       cursorY.set(e.clientY - 16);
+  const flareSize = isPointer ? 0 : 40;
 
-//       // Check if the cursor is over specific elements
-//       const elements = document.elementsFromPoint(e.clientX, e.clientY);
-//       const isOverTargetElement = elements.some(
-//         (element) =>
-//           ["h1", "button", "a", "input", "label"].includes(element.tagName.toLowerCase()) ||
-//           element.hasAttribute("data-cursor")
-//       );
+  const cursorStyle = useMemo(() => ({
+    left: `${position.x}px`,
+    top: `${position.y}px`,
+    width: `${flareSize}px`,
+    height: `${flareSize}px`,
+    ...(isPointer ? { opacity: 0, pointerEvents: 'none' as const } : {}),
+  }), [position.x, position.y, flareSize, isPointer]);
 
-//       setIsPointer(isOverTargetElement);
-//     },
-//     [cursorX, cursorY]
-//   );
+  const cursorClassName = cn(
+    "fixed border-2 z-[100] border-black/10 dark:border-white/10 bg-transparent rounded-full mix-blend-normal pointer-events-none -translate-x-1/2 -translate-y-1/2 backdrop-filter backdrop-blur-[2px]  hidden md:block"
+  );
 
-//   React.useEffect(() => {
-//     window.addEventListener("mousemove", moveCursor);
+  return (
+    <div
+      className={cursorClassName}
+      style={cursorStyle}
+    />
+  );
+};
 
-//     return () => {
-//       window.removeEventListener("mousemove", moveCursor);
-//     };
-//   }, [moveCursor]);
-
-//   const variants: Variants = {
-//     normal: {
-//       scale: 1,
-//       transition: {
-//         duration: 0.2,
-//         ease: "easeOut",
-//       },
-//     },
-//     pointer: {
-//       scale: 0.5,
-//       transition: {
-//         duration: 0.2,
-//         ease: "easeOut",
-//       },
-//     },
-//   };
-
-//   return (
-//     <AnimatePresence>
-//       <motion.div
-//         className="hidden md:block pointer-events-none fixed z-[10001]"
-//         initial="normal"
-//         animate={isPointer ? "pointer" : "normal"}
-//         exit="normal"
-//         transition={{ duration: 0.2 }}
-//         variants={variants}
-//         style={{
-//           translateX: cursorXSpring,
-//           translateY: cursorYSpring,
-//         }}
-//       >
-//         <div
-//           className={cn(
-//             "mix-blend-mode-difference bg-blend-mode-difference backdrop-blur-sm size-10 border border-black/10 dark:border-white/30 bg-black/30 transition-all duration-200 rounded-full"
-//           )}
-//         />
-//       </motion.div>
-//     </AnimatePresence>
-//   );
-// });
-
-// export default Cursor;
-
-// "use client";
-
-// import React, { useCallback, useEffect, useState, memo } from "react";
-// import { AnimatePresence, motion, useMotionValue, useSpring, Variants } from "framer-motion";
-// import { cn } from "@/lib/utils";
-
-// interface CursorProps {}
-
-// const Cursor: React.FC<CursorProps> = memo(() => {
-//   const [isPointer] = useState<boolean>(false);
-//   const cursorX = useMotionValue<number>(-100);
-//   const cursorY = useMotionValue<number>(-100);
-
-//   const springConfig = { damping: 100, stiffness: 1000 };
-//   const cursorXSpring = useSpring(cursorX, springConfig);
-//   const cursorYSpring = useSpring(cursorY, springConfig);
-
-//   const moveCursor = useCallback(
-//     (e: MouseEvent) => {
-//       cursorX.set(e.clientX - 16);
-//       cursorY.set(e.clientY - 16);
-//     },
-//     [cursorX, cursorY]
-//   );
-
-//   useEffect(() => {
-//     const handleMouseMove = (e: MouseEvent) => moveCursor(e);
-//     window.addEventListener("mousemove", handleMouseMove);
-
-//     return () => {
-//       window.removeEventListener("mousemove", handleMouseMove);
-//     };
-//   }, [moveCursor]);
-
-//   // useEffect(() => {
-//   //   const elements = Array.from(
-//   //     document.querySelectorAll<HTMLElement>('h1,button,a,input,label,[data-cursor="pointer"]')
-//   //   );
-
-//   //   const handleMouseEnter = () => {
-//   //     setIsPointer(true);
-//   //   };
-
-//   //   const handleMouseLeave = () => {
-//   //     setIsPointer(false);
-//   //   };
-
-//   //   elements.forEach((element) => {
-//   //     element.addEventListener("mouseenter", handleMouseEnter, false);
-//   //     element.addEventListener("mouseleave", handleMouseLeave, false);
-//   //   });
-
-//   //   return () => {
-//   //     elements.forEach((element) => {
-//   //       element.removeEventListener("mouseenter", handleMouseEnter, false);
-//   //       element.removeEventListener("mouseleave", handleMouseLeave, false);
-//   //     });
-//   //   };
-//   // }, []);
-
-//   const variants: Variants = {
-//     normal: {
-//       scale: 1,
-//       transition: {
-//         duration: 0.2,
-//         ease: "easeOut",
-//       },
-//     },
-//     pointer: {
-//       scale: 0.5,
-//       transition: {
-//         duration: 0.2,
-//         ease: "easeOut",
-//       },
-//     },
-//   };
-
-//   return (
-//     <AnimatePresence>
-//       <motion.div
-//         className="hidden md:block pointer-events-none fixed z-[10001]"
-//         initial="normal"
-//         animate={isPointer ? "pointer" : "normal"}
-//         exit="normal"
-//         transition={{ duration: 0.2 }}
-//         variants={variants}
-//         style={{
-//           translateX: cursorXSpring,
-//           translateY: cursorYSpring,
-//         }}
-//       >
-//         <div
-//           className={cn(
-//             "mix-blend-mode-difference bg-blend-mode-difference backdrop-blur-sm size-6 border  bg-foreground/5 transition-all duration-200 rounded-full"
-//           )}
-//         />
-//       </motion.div>
-//     </AnimatePresence>
-//   );
-// });
-
-// export default Cursor;
+export default FramerCursor;*/
