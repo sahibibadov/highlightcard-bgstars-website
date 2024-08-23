@@ -1,13 +1,32 @@
 "use client";
 
-import React, { useCallback, useState, memo } from "react";
+import React, { useCallback, useEffect, useState,memo } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring, Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
+//import { useMousePosition } from "@/hook/useMousePosition"; // Hook'u içe aktar
+
+export const useMousePosition = () => {
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
+  useEffect(() => {
+    const updateMousePosition = (ev: MouseEvent) => {
+      setMousePosition({ x: ev.clientX, y: ev.clientY });
+    };
+    window.addEventListener("mousemove", updateMousePosition);
+    return () => {
+      window.removeEventListener("mousemove", updateMousePosition);
+    };
+  }, []);
+  return mousePosition;
+};
 
 interface CursorProps {}
 
 const FramerCursor: React.FC<CursorProps> = () => {
   const [isPointer, setIsPointer] = useState<boolean>(false);
+  const { x: mouseX, y: mouseY } = useMousePosition(); // Hook'u kullan
   const cursorX = useMotionValue<number>(-100);
   const cursorY = useMotionValue<number>(-100);
 
@@ -15,31 +34,21 @@ const FramerCursor: React.FC<CursorProps> = () => {
   const cursorXSpring = useSpring(cursorX, springConfig);
   const cursorYSpring = useSpring(cursorY, springConfig);
 
-  const moveCursor = useCallback(
-    (e: MouseEvent) => {
-      cursorX.set(e.clientX - 16);
-      cursorY.set(e.clientY - 16);
+  // Update cursor position based on mouse position
+  useEffect(() => {
+    cursorX.set(mouseX - 16);
+    cursorY.set(mouseY - 16);
 
-      // Check if the cursor is over specific elements
-      const elements = document.elementsFromPoint(e.clientX, e.clientY);
-      const isOverTargetElement = elements.some(
-        (element) =>
-          ["h1", "h2", "h3", "button", "a", "input", "label"].includes(element.tagName.toLowerCase()) ||
-          element.hasAttribute("data-cursor"),
-      );
+    // Check if the cursor is over specific elements
+    const elements = document.elementsFromPoint(mouseX, mouseY);
+    const isOverTargetElement = elements.some(
+      (element) =>
+        ["h1", "h2", "h3", "button", "a", "input", "label"].includes(element.tagName.toLowerCase()) ||
+        element.hasAttribute("data-cursor"),
+    );
 
-      setIsPointer(isOverTargetElement);
-    },
-    [cursorX, cursorY],
-  );
-
-  React.useEffect(() => {
-    window.addEventListener("mousemove", moveCursor, { passive: true });
-
-    return () => {
-      window.removeEventListener("mousemove", moveCursor);
-    };
-  }, [moveCursor]);
+    setIsPointer(isOverTargetElement);
+  }, [mouseX, mouseY, cursorX, cursorY]);
 
   const variants: Variants = {
     normal: {
@@ -74,7 +83,7 @@ const FramerCursor: React.FC<CursorProps> = () => {
       >
         <div
           className={cn(
-            "mix-blend-mode-difference bg-blend-mode-difference size-9 rounded-full border border-white/30  backdrop-blur-sm ",
+            "mix-blend-mode-difference bg-blend-mode-difference size-9 rounded-full border border-white/30 backdrop-blur-sm",
           )}
         />
       </motion.div>
